@@ -1,50 +1,57 @@
-# Welcome to your Expo app 👋
+# Hotel Laundry
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Mobile app for discovering nearby laundry services, comparing offerings, and viewing service details on a map. Built with Expo, Expo Router, and React Native.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Nearby services list with search and multi-select filters
+- Service detail modal with pricing per service
+- Google Maps view with themed map styling and custom pins
+- Light and dark theme support with a settings toggle
 
-   ```bash
-   npm install
-   ```
+## Requirements
 
-2. Start the app
+- Node.js 18+
+- Xcode for iOS or Android Studio for Android
 
-   ```bash
-   npx expo start
-   ```
+## Setup
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+Install dependencies:
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Start the app:
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Google Maps setup
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+This app uses `react-native-maps` with Google Maps provider. Add your API key in `app.json`:
 
-## Join the community
+- `expo.ios.config.googleMapsApiKey`
+- `expo.android.config.googleMaps.apiKey`
 
-Join our community of developers creating universal apps.
+Note: Google Maps on iOS requires a dev client or a native build (Expo Go does not support `PROVIDER_GOOGLE`).
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Scripts
+
+- `npm run ios` - run iOS native build
+- `npm run android` - run Android native build
+- `npm run web` - run web
+- `npm run lint` - lint codebase
+
+## Project structure
+
+- `app/` - routes and screens (Expo Router)
+- `components/` - shared UI components
+- `contexts/` - app-level context (theme)
+- `data/` - mocked service data
+
+## Notes
+
+- Theme toggle lives in the Profile tab.
+- Update mock data in `data/mockServices.ts` for services and prices.
