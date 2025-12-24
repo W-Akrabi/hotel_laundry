@@ -10,6 +10,7 @@ import {
   Image,
   ImageBackground,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '../../store/themeStore';
@@ -36,6 +37,10 @@ export default function ListScreen() {
   const services = useServicesStore(state => state.services);
   const isLoading = useServicesStore(state => state.isLoading);
   const error = useServicesStore(state => state.error);
+  const refreshServices = useServicesStore(state => state.refreshServices);
+
+  // Refresh state
+  const [refreshing, setRefreshing] = useState(false);
 
   // Filters state
   const selectedCategories = useFiltersStore(state => state.selectedCategories);
@@ -55,6 +60,12 @@ export default function ListScreen() {
 
   const handleCloseModal = () => {
     setModalVisible(false);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshServices();
+    setRefreshing(false);
   };
 
   // Save search query when user submits search
@@ -291,6 +302,14 @@ export default function ListScreen() {
           ListHeaderComponent={renderHeader}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Ionicons name="search" size={48} color={colors.textSecondary} />

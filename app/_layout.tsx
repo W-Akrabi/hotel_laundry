@@ -17,11 +17,16 @@ export default function RootLayout() {
 
   // Pre-fetch services when app loads
   const fetchServices = useServicesStore(state => state.fetchServices);
+  const clearCache = useServicesStore(state => state.clearCache);
 
-  // Fetch services on app load
+  // Clear cache and fetch fresh services on app load
   React.useEffect(() => {
-    fetchServices();
-  }, [fetchServices]);
+    const loadServices = async () => {
+      await clearCache();
+      await fetchServices();
+    };
+    loadServices();
+  }, [fetchServices, clearCache]);
 
   return <RootLayoutContent />;
 }
