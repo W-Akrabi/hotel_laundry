@@ -28,6 +28,20 @@ Start the app:
 npx expo start
 ```
 
+## Supabase setup (Option B - Edge Function)
+
+This app can fetch laundry services from Supabase Edge Functions by setting:
+
+- `EXPO_PUBLIC_SUPABASE_URL` (e.g. `https://<project-ref>.supabase.co`)
+- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (forwarded as `x-publishable-key`)
+
+The API client will call:
+
+- `GET /functions/v1/services`
+- `GET /functions/v1/services/<id>`
+
+The Edge Function should read from the `services` view and return data shaped to match `data/mockServices.ts`.
+
 ## Google Maps setup
 
 This app uses `react-native-maps` with Google Maps provider. Add your API key in `app.json`:

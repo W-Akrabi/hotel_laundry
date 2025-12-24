@@ -9,6 +9,12 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    ...(API_CONFIG.SUPABASE_ANON_KEY
+      ? {
+          apikey: API_CONFIG.SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${API_CONFIG.SUPABASE_ANON_KEY}`,
+        }
+      : {}),
   },
 });
 

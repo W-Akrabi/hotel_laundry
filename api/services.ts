@@ -1,7 +1,7 @@
-import { apiService } from './client';
-import { API_CONFIG, USE_MOCK_API } from './config/apiConfig';
+import { USE_MOCK_API } from './config/apiConfig';
 import { LaundryService, mockLaundryServices } from '../data/mockServices';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from './supabaseClient';
 
 // Cache keys
 const CACHE_KEYS = {
@@ -57,22 +57,32 @@ export const laundryServicesApi = {
         await new Promise(resolve => setTimeout(resolve, 500));
         return mockLaundryServices;
       }
-      
+
       // Check cache first
       const isCacheStillValid = await isCacheValid();
       if (isCacheStillValid) {
         const cachedData = await AsyncStorage.getItem(CACHE_KEYS.ALL_SERVICES);
         if (cachedData) {
-          return JSON.parse(cachedData);
+          const parsed = JSON.parse(cachedData);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
         }
       }
       
-      // Fetch from API if cache is invalid or empty
-      const services = await apiService.get<LaundryService[]>(API_CONFIG.ENDPOINTS.SERVICES);
+      const { data, error } = await supabase.from('services').select('*');
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const services = (data ?? []) as LaundryService[];
       
       // Update cache
-      await AsyncStorage.setItem(CACHE_KEYS.ALL_SERVICES, JSON.stringify(services));
-      await updateCacheTimestamp();
+      if (services.length > 0) {
+        await AsyncStorage.setItem(CACHE_KEYS.ALL_SERVICES, JSON.stringify(services));
+        await updateCacheTimestamp();
+      }
       
       return services;
     } catch (error) {
@@ -104,7 +114,7 @@ export const laundryServicesApi = {
         await new Promise(resolve => setTimeout(resolve, 500));
         return mockLaundryServices.find(service => service.id === id);
       }
-      
+
       // Check cache first
       const isCacheStillValid = await isCacheValid();
       if (isCacheStillValid) {
@@ -114,11 +124,22 @@ export const laundryServicesApi = {
         }
       }
       
-      // Fetch from API if cache is invalid or empty
-      const service = await apiService.get<LaundryService>(API_CONFIG.ENDPOINTS.SERVICE_DETAILS(id));
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      const service = (data ?? undefined) as LaundryService | undefined;
       
       // Update cache
-      await AsyncStorage.setItem(CACHE_KEYS.SERVICE_DETAILS(id), JSON.stringify(service));
+      if (service) {
+        await AsyncStorage.setItem(CACHE_KEYS.SERVICE_DETAILS(id), JSON.stringify(service));
+      }
       await updateCacheTimestamp();
       
       return service;
@@ -149,7 +170,7 @@ export const laundryServicesApi = {
       const keys = await AsyncStorage.getAllKeys();
       
       // Filter cache keys
-      const cacheKeys = keys.filter(key => 
+      const cacheKeys = keys.filter((key: string) => 
         key === CACHE_KEYS.ALL_SERVICES || 
         key === CACHE_KEYS.CACHE_TIMESTAMP ||
         key.startsWith('cached_laundry_service_')
