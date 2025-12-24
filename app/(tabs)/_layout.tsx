@@ -2,10 +2,10 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeStore } from '../../store/themeStore';
 
 export default function TabsLayout() {
-  const { colors } = useTheme();
+  const colors = useThemeStore(state => state.colors);
 
   return (
     <Tabs

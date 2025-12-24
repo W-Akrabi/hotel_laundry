@@ -1,10 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeStore } from '../../store/themeStore';
+import { useFiltersStore } from '../../store/filtersStore';
 
 export default function ProfileScreen() {
-  const { colors, toggleTheme, theme } = useTheme();
+  // Theme state
+  const colors = useThemeStore(state => state.colors);
+  const theme = useThemeStore(state => state.theme);
+  const toggleTheme = useThemeStore(state => state.toggleTheme);
+
+  // User preferences
+  const notifications = useFiltersStore(state => state.userPreferences.notifications);
+  const toggleNotifications = useFiltersStore(state => state.toggleNotifications);
+  const recentSearches = useFiltersStore(state => state.recentSearches);
+  const clearRecentSearches = useFiltersStore(state => state.clearRecentSearches);
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -54,6 +64,12 @@ export default function ProfileScreen() {
               </Text>
             </View>
           </View>
+          <Switch
+            value={notifications}
+            onValueChange={toggleNotifications}
+            trackColor={{ false: colors.border, true: `${colors.primary}80` }}
+            thumbColor={notifications ? colors.primary : colors.textSecondary}
+          />
         </View>
         <View style={[styles.settingRow, { backgroundColor: colors.card }]}>
           <View style={styles.settingLeft}>
@@ -67,8 +83,34 @@ export default function ProfileScreen() {
               </Text>
             </View>
           </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </View>
       </View>
+
+      {recentSearches.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionTitleRow}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Searches</Text>
+            <TouchableOpacity onPress={clearRecentSearches}>
+              <Text style={[styles.clearText, { color: colors.primary }]}>Clear All</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={[styles.recentSearchesContainer, { backgroundColor: colors.card }]}>
+            {recentSearches.map((search, index) => (
+              <View 
+                key={index} 
+                style={[
+                  styles.recentSearchItem, 
+                  index < recentSearches.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 }
+                ]}
+              >
+                <Ionicons name="search" size={16} color={colors.textSecondary} />
+                <Text style={[styles.recentSearchText, { color: colors.text }]}>{search}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -109,6 +151,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  clearText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   settingRow: {
     borderRadius: 14,
     padding: 14,
@@ -135,5 +187,19 @@ const styles = StyleSheet.create({
   settingSubtitle: {
     fontSize: 12,
     marginTop: 2,
+  },
+  recentSearchesContainer: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  recentSearchItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    gap: 12,
+  },
+  recentSearchText: {
+    fontSize: 14,
+    flex: 1,
   },
 });

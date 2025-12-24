@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,11 +9,14 @@ import {
   TextInput,
   Image,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeStore } from '../../store/themeStore';
+import { useServicesStore } from '../../store/servicesStore';
+import { useFiltersStore } from '../../store/filtersStore';
 import { ServiceDetailModal } from '../../components/ServiceDetailModal';
-import { mockLaundryServices, LaundryService } from '../../data/mockServices';
+import { LaundryService } from '../../data/mockServices';
 
 const CATEGORIES = [
   { id: 'all', label: 'All', icon: 'star' },
@@ -26,11 +29,24 @@ const CATEGORIES = [
 ];
 
 export default function ListScreen() {
-  const { colors } = useTheme();
+  // Theme state
+  const colors = useThemeStore(state => state.colors);
+
+  // Services state
+  const services = useServicesStore(state => state.services);
+  const isLoading = useServicesStore(state => state.isLoading);
+  const error = useServicesStore(state => state.error);
+
+  // Filters state
+  const selectedCategories = useFiltersStore(state => state.selectedCategories);
+  const searchQuery = useFiltersStore(state => state.searchQuery);
+  const toggleCategory = useFiltersStore(state => state.toggleCategory);
+  const setSearchQuery = useFiltersStore(state => state.setSearchQuery);
+  const addRecentSearch = useFiltersStore(state => state.addRecentSearch);
+
+  // Local modal state (keeping this local as it's UI-specific)
   const [selectedService, setSelectedService] = useState<LaundryService | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(['all']);
-  const [searchQuery, setSearchQuery] = useState('');
 
   const handleServicePress = (service: LaundryService) => {
     setSelectedService(service);
@@ -41,24 +57,17 @@ export default function ListScreen() {
     setModalVisible(false);
   };
 
-  const toggleCategory = (categoryId: string) => {
-    if (categoryId === 'all') {
-      setSelectedCategories(['all']);
-      return;
+  // Save search query when user submits search
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      addRecentSearch(searchQuery.trim());
     }
-
-    setSelectedCategories((prev) => {
-      const next = prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev.filter((id) => id !== 'all'), categoryId];
-
-      return next.length ? next : ['all'];
-    });
   };
 
+  // Filter services based on categories and search query
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const activeCategories = selectedCategories.includes('all') ? [] : selectedCategories;
-  const filteredServices = mockLaundryServices.filter((service) => {
+  const filteredServices = services.filter((service) => {
     const searchable = [
       service.name,
       service.location.address,
@@ -130,6 +139,8 @@ export default function ListScreen() {
           placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearchSubmit}
+          returnKeyType="search"
         />
       </View>
 
@@ -213,7 +224,7 @@ export default function ListScreen() {
 
       <View style={styles.serviceInfo}>
         <Text style={[styles.serviceName, { color: colors.text }]}>{item.name}</Text>
-        
+
         <View style={styles.serviceRow}>
           <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
           <Text style={[styles.serviceText, { color: colors.textSecondary }]}>
@@ -254,14 +265,45 @@ export default function ListScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <FlatList
-        data={filteredServices}
-        keyExtractor={(item) => item.id}
-        renderItem={renderServiceCard}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading services...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={48} color={colors.error} />
+          <Text style={[styles.errorText, { color: colors.text }]}>
+            {error}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: colors.primary }]}
+            onPress={() => useServicesStore.getState().fetchServices()}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredServices}
+          keyExtractor={(item) => item.id}
+          renderItem={renderServiceCard}
+          ListHeaderComponent={renderHeader}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search" size={48} color={colors.textSecondary} />
+              <Text style={[styles.emptyText, { color: colors.text }]}>
+                No services found
+              </Text>
+              <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
+                Try adjusting your filters or search query
+              </Text>
+            </View>
+          }
+        />
+      )}
       <ServiceDetailModal
         visible={modalVisible}
         service={selectedService}
@@ -277,6 +319,56 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 24,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 48,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    textAlign: 'center',
   },
   headerContainer: {
     paddingTop: 8,

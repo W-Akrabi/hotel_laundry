@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useThemeStore } from '../../store/themeStore';
 import { MockMapView } from '../../components/MockMapView';
 import { ServiceDetailModal } from '../../components/ServiceDetailModal';
 import { mockLaundryServices, LaundryService } from '../../data/mockServices';
 
 export default function MapScreen() {
-  const { colors } = useTheme();
+  const colors = useThemeStore(state => state.colors);
   const [selectedService, setSelectedService] = useState<LaundryService>(mockLaundryServices[0]);
   const [modalVisible, setModalVisible] = useState(false);
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../contexts/ThemeContext';
+import { useThemeStore } from '../store/themeStore';
 import { LaundryService } from '../data/mockServices';
 
 interface ServiceCardProps {
@@ -10,7 +10,7 @@ interface ServiceCardProps {
 }
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({ service, onPress }) => {
-  const { colors } = useTheme();
+  const colors = useThemeStore(state => state.colors);
 
   return (
     <TouchableOpacity

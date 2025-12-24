@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../contexts/ThemeContext';
+import { useThemeStore } from '../store/themeStore';
 import { LaundryService } from '../data/mockServices';
 import { BlurView } from 'expo-blur';
 
@@ -25,7 +25,8 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
   service,
   onClose,
 }) => {
-  const { colors, theme } = useTheme();
+  const colors = useThemeStore(state => state.colors);
+  const theme = useThemeStore(state => state.theme);
 
   if (!service) return null;
 
@@ -158,7 +159,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
             {/* Contact Section */}
             <View style={styles.contactSection}>
               <Text style={[styles.contactTitle, { color: colors.text }]}>Contact Service</Text>
-              
+
               <TouchableOpacity
                 style={[styles.contactButton, { backgroundColor: colors.primary }]}
                 onPress={handleCall}

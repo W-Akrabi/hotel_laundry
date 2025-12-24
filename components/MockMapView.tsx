@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, Platform, Linking, Alert } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { ExternalLink, MapPin, Navigation } from 'lucide-react-native';
-import { useTheme } from '../contexts/ThemeContext';
+import { useThemeStore } from '../store/themeStore';
 import { Ionicons } from '@expo/vector-icons';
 
 interface MockMapViewProps {
@@ -26,7 +26,8 @@ export const MockMapView: React.FC<MockMapViewProps> = ({
   onDirectionsPress,
   onMarkerPress,
 }) => {
-  const { colors, theme } = useTheme();
+  const colors = useThemeStore(state => state.colors);
+  const theme = useThemeStore(state => state.theme);
   const mapStyle = theme === 'dark' ? darkMapStyle : lightMapStyle;
 
   const openInMaps = async () => {
